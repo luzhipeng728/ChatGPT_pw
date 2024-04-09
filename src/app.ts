@@ -9,7 +9,7 @@ import { randomUUID } from "crypto";
 const port = 3040;
 const baseUrl = "https://chat.openai.com";
 const apiUrl = `${baseUrl}/backend-anon/conversation`;
-const refreshInterval = 60000; // Interval to refresh token in ms
+const refreshInterval = 1000; // Interval to refresh token in ms
 const errorWait = 120000; // Wait time in ms after an error
 
 // Initialize global variables to store the session token and device ID
@@ -90,7 +90,7 @@ async function getNewSessionId() {
       headers: { "oai-device-id": newDeviceId },
     }
   );
-  console.log(`System: Successfully refreshed session ID and token. ${!token ? "(Now it's ready to process requests)" : ""}`);
+  // console.log(`System: Successfully refreshed session ID and token. ${!token ? "(Now it's ready to process requests)" : ""}`);
   oaiDeviceId = newDeviceId;
   token = response.data.token;
 
@@ -269,19 +269,23 @@ async function handleChatCompletion(req: Request, res: Response) {
 
     res.end();
   } catch (error: any) {
+    // await getNewSessionId();
     // console.log('Error:', error.response?.data ?? error.message);
     if (!res.headersSent) res.setHeader("Content-Type", "application/json");
-    // console.error('Error handling chat completion:', error);
+    // 返回状态码改成429
+    res.statusCode = 429;
+    res.statusMessage = "Too Many Requests";
     res.write(
       JSON.stringify({
         status: false,
         error: {
-		  message: "An error happened, please make sure your request is SFW, or use a jailbreak to bypass the filter.",
-          type: "invalid_request_error",
+          message: error.message,
+          type: "internal_error",
         },
         support: "https://discord.pawan.krd",
+        retry_after: errorWait,
       })
-    );
+    )
     res.end();
   }
 }
