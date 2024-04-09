@@ -10,8 +10,12 @@ import { randomUUID } from "crypto";
 const port = 3040;
 const baseUrl = "https://chat.openai.com";
 const apiUrl = `${baseUrl}/backend-anon/conversation`;
-const refreshInterval = 10000; // Interval to refresh token in ms
+const refreshInterval = 60000; // Interval to refresh token in ms
 const errorWait = 120000; // Wait time in ms after an error
+const proxyUrl = process.env.PROXY_URL || "k4r8lm:tdu85fq2@172.80.62.53:42000";
+const [proxyUser, proxyPasswordHost] = proxyUrl.split(':');
+const [proxyPassword, proxyHostPort] = proxyPasswordHost.split('@');
+const [proxyHost, proxyPort] = proxyHostPort.split(':');
 
 // Initialize global variables to store the session token and device ID
 let token: string;
@@ -62,6 +66,15 @@ async function* StreamCompletion(data: any) {
 // Setup axios instance for API requests with predefined configurations
 const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+  proxy: {
+    host: proxyHost,
+    port: parseInt(proxyPort),
+    // 如果你的代理服务器需要身份验证
+    auth: {
+      username: proxyUser,
+      password: proxyPassword,
+    },
+  },
   headers: {
     accept: "*/*",
     "accept-language": "en-US,en;q=0.9",
@@ -272,7 +285,7 @@ async function handleChatCompletion(req: Request, res: Response) {
 
     res.end();
   } catch (error: any) {
-    // await getNewSessionId();
+    await getNewSessionId();
     // console.log('Error:', error.response?.data ?? error.message);
     if (!res.headersSent) res.setHeader("Content-Type", "application/json");
     // 返回状态码改成429
