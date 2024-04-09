@@ -6,10 +6,11 @@ import { encode } from "gpt-3-encoder";
 import { randomUUID } from "crypto";
 
 // Constants for the server and API configuration
+// 从外界传入port
 const port = 3040;
 const baseUrl = "https://chat.openai.com";
 const apiUrl = `${baseUrl}/backend-anon/conversation`;
-const refreshInterval = 1000; // Interval to refresh token in ms
+const refreshInterval = 10000; // Interval to refresh token in ms
 const errorWait = 120000; // Wait time in ms after an error
 
 // Initialize global variables to store the session token and device ID
@@ -90,7 +91,9 @@ async function getNewSessionId() {
       headers: { "oai-device-id": newDeviceId },
     }
   );
-  // console.log(`System: Successfully refreshed session ID and token. ${!token ? "(Now it's ready to process requests)" : ""}`);
+  // 打印下获取到的response
+  console.log(response.data);
+  console.log(`System: Successfully refreshed session ID and token. ${!token ? "(Now it's ready to process requests)" : ""}`);
   oaiDeviceId = newDeviceId;
   token = response.data.token;
 
