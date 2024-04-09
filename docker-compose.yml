@@ -23,3 +23,19 @@ services:
       - "3043:3040" # Maps port 3041 on the host to port 3040 in the container
     environment:
       - PROXY_URL=k4r8lm:tdu85fq2@172.80.62.53:42000
+
+  app_3044:
+    build: .
+    ports:
+      - "3044:3040" # Maps port 3041 on the host to port 3040 in the container
+    environment:
+      - PROXY_URL=qivV9tfm:zmwK312G@213.139.193.145:64313
+
+
+  app_3045:
+    build: .
+    ports:
+      - "3045:3040" # Maps port 3041 on the host to port 3040 in the container
+    environment:
+      - PROXY_URL=qivV9tfm:zmwK312G@213.139.193.145:64313
+
