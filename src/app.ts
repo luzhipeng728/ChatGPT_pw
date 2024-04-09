@@ -4,6 +4,9 @@ import axios from "axios";
 import https from "https";
 import { encode } from "gpt-3-encoder";
 import { randomUUID } from "crypto";
+// const { SocksProxyAgent } = require('socks-proxy-agent');
+import { SocksProxyAgent } from 'socks-proxy-agent';
+
 
 // Constants for the server and API configuration
 // 从外界传入port
@@ -12,10 +15,22 @@ const baseUrl = "https://chat.openai.com";
 const apiUrl = `${baseUrl}/backend-anon/conversation`;
 const refreshInterval = 60000; // Interval to refresh token in ms
 const errorWait = 120000; // Wait time in ms after an error
-const proxyUrl = process.env.PROXY_URL || "k4r8lm:tdu85fq2@172.80.62.53:42000";
-const [proxyUser, proxyPasswordHost] = proxyUrl.split(':');
-const [proxyPassword, proxyHostPort] = proxyPasswordHost.split('@');
-const [proxyHost, proxyPort] = proxyHostPort.split(':');
+
+
+
+// 从环境变量中获取代理URL
+let  proxyUrl = process.env.PROXY_URL || '';
+let proxyAgent: any;
+// 如果代理URL为空，就不启用代理
+if (!proxyUrl) {
+  console.log('No PROXY_URL specified, not using proxy.');
+}else{
+  proxyUrl = 'socks5h://' + proxyUrl
+  proxyAgent = new SocksProxyAgent(proxyUrl);
+  console.log(`Using proxy: ${proxyUrl}`);
+}
+
+
 
 // Initialize global variables to store the session token and device ID
 let token: string;
@@ -23,7 +38,6 @@ let oaiDeviceId: string;
 
 // Function to wait for a specified duration
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 function GenerateCompletionId(prefix: string = "cmpl-") {
   const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const length = 28;
@@ -65,16 +79,6 @@ async function* StreamCompletion(data: any) {
 
 // Setup axios instance for API requests with predefined configurations
 const axiosInstance = axios.create({
-  httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-  proxy: {
-    host: proxyHost,
-    port: parseInt(proxyPort),
-    // 如果你的代理服务器需要身份验证
-    auth: {
-      username: proxyUser,
-      password: proxyPassword,
-    },
-  },
   headers: {
     accept: "*/*",
     "accept-language": "en-US,en;q=0.9",
@@ -92,6 +96,9 @@ const axiosInstance = axios.create({
     "sec-fetch-site": "same-origin",
 	"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
   },
+  // Other axios config...
+  httpAgent: proxyAgent,
+  httpsAgent: proxyAgent,
 });
 
 // Function to get a new session ID and token from the OpenAI API
